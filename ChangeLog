@@ -2,3 +2,9 @@
 	* Added README
 	* Added ChangeLog
 	* Added cgen/
+2019-05-10  Mary Bennett
+	* Changed README
+	* Removed cgen/
+	* Added gas/
+	* Added opcodes/
+	* Added cpu/

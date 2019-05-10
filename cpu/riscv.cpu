@@ -1,0 +1,132 @@
+; RISC-V
+
+(include "simplify.inc")
+
+(define-arch
+  (name riscv)
+  (comment "RISCV")
+  (insn-lsb0? #t)
+  (machs riscv:rv64)
+  (isas rv64i)
+)
+
+(define-isa
+  (name rv64i)
+  (default-insn-word-bitsize 32)
+  (default-insn-bitsize 32)
+  (base-insn-bitsize 32)
+)
+
+(define-cpu
+  (name riscvbf64)
+  (comment "RISCV CPU family (64-bit)")
+  (insn-endian little)
+  (data-endian little)
+  (word-bitsize 64)
+)
+
+(define-mach
+  (name riscv:rv64)
+  (comment "Generic RISCV CPU (64-bit)")
+  (cpu riscvbf64)
+  (isas rv64i)
+)
+
+(define-model
+  (name riscv)
+  (comment "RISCV Model")
+  (mach riscv:rv64)
+
+  (unit u-exec "execution unit" ()
+    1 1 ; issue done
+    ()  ; state
+    ()  ; inputs
+    ()  ; ouputs
+    ()  ; profile action (default)
+    )
+)
+
+(define-pmacro base-isas   () (ISA  rv64i))
+(define-pmacro all-isas    () (ISA  rv64i))
+(define-pmacro all-machs   () (MACH riscv:rv64))
+
+(define-hardware
+  (name h-pc)
+  (comment "program counter")
+  (attrs PC all-isas all-machs)
+  (type pc UDI)
+  (get () (raw-reg h-pc))
+  (set (newval) (set (raw-reg h-pc) newval))
+)
+
+(define-pmacro gpr-names () (
+  ; ABI names
+  ; These are first as that appear to cause them to be prioritized
+  ; over the generic names
+  (zero 0) (ra   1) (sp   2) (gp   3) (tp   4) (t0   5) (t1   6)
+  (t2   7) (s0   8) (s1   9) (a0  10) (a1  11) (a2  12) (a3  13)
+  (a4  14) (a5  15) (a6  16) (a7  17) (s2  18) (s3  19) (s4  20)
+  (s5  21) (s6  22) (s7  23) (s8  24) (s9  25) (s10 26) (s11 27)
+  (t3  28) (t4  29) (t5  30) (t6  31)
+
+  ; Basic register names
+  (x0   0) (x1   1) (x2   2) (x3   3) (x4   4) (x5   5) (x6   6)
+  (x7   7) (x8   8) (x9   9) (x10 10) (x11 11) (x12 12) (x13 13)
+  (x14 14) (x15 15) (x16 16) (x17 17) (x18 18) (x19 19) (x20 20)
+  (x21 21) (x22 22) (x23 23) (x24 24) (x25 25) (x26 26) (x27 27)
+  (x28 28) (x29 29) (x30 30) (x31 31))
+)
+
+(define-hardware
+  (name h-gpr)
+  (comment "General Purpose Registers")
+  (attrs all-isas all-machs)
+  (type register DI (64))
+  (indices keyword "" gpr-names)
+)
+
+(dnf f-opcode   "opcode"   (all-isas)  6  7)
+(dnf f-rd       "rd"       (all-isas) 11  5)
+(dnf f-rs1      "rs1"      (all-isas) 19  5)
+(dnf f-rs2      "rs2"      (all-isas) 24  5)
+(dnf f-funct7   "funct7"   (all-isas) 31  7)
+(dnf f-funct3   "funct3"   (all-isas) 14  3)
+
+(define-operand
+  (name rd)
+  (comment "rd")
+  (attrs all-isas)
+  (type h-gpr)
+  (index f-rd)
+  (handlers (parse "gpr"))
+)
+(define-operand
+  (name rs1)
+  (comment "rs1")
+  (attrs all-isas)
+  (type h-gpr)
+  (index f-rs1)
+  (handlers (parse "gpr"))
+)
+(define-operand
+  (name rs2)
+  (comment "rs2")
+  (attrs all-isas)
+  (type h-gpr)
+  (index f-rs2)
+  (handlers (parse "gpr"))
+)
+
+; Base Instruction Format R-type
+(define-pmacro (rv-format-r mnemonic attr funct7 funct3 opcode sem)
+  (define-insn
+    (name (.sym mnemonic))
+    (comment (.str mnemonic))
+    (attrs attr)
+    (syntax (.str mnemonic " ${rd},${rs1},${rs2}"))
+    (format (.splice + (f-funct7 funct7) rs2 rs1 (f-funct3 funct3) rd (f-opcode opcode)))
+    (semantics sem)
+  )
+)
+
+(rv-format-r "add"  base-isas #b0000000 #b000 #b0110011 (set DI rd (add DI rs1 rs2)))

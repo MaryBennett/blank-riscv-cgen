@@ -1,0 +1,56 @@
+/* RISC-V */
+/* This file is an addendum to riscv.cpu.  Heavy use of C code isn't
+   appropriate in .cpu files, so it resides here.  This especially applies
+   to assembly/disassembly where parsing/printing can be quite involved.
+   Such things aren't really part of the specification of the cpu, per se,
+   so .cpu files provide the general framework and .opc files handle the
+   nitty-gritty details as necessary.
+
+   Each section is delimited with start and end markers.
+
+   <arch>-opc.h additions use: "-- opc.h"
+   <arch>-opc.c additions use: "-- opc.c"
+   <arch>-asm.c additions use: "-- asm.c"
+   <arch>-dis.c additions use: "-- dis.c"
+   <arch>-ibd.h additions use: "-- ibd.h"  */
+
+/* -- opc.h */
+
+#undef  CGEN_DIS_HASH_SIZE
+#define CGEN_DIS_HASH_SIZE 1
+#undef  CGEN_DIS_HASH
+#define CGEN_DIS_HASH(buffer, value) 0
+
+extern int riscv_cgen_insn_supported (CGEN_CPU_DESC cd, const CGEN_INSN *insn);
+
+/* -- */
+
+/* -- opc.c */
+
+int riscv_cgen_insn_supported (CGEN_CPU_DESC cd, const CGEN_INSN *insn)
+{
+  CGEN_BITSET isas = CGEN_INSN_BITSET_ATTR_VALUE (insn, CGEN_INSN_ISA);
+  return cgen_bitset_intersect_p (cd->isas, &isas);
+}
+
+/* -- */
+
+/* -- asm.c */
+
+#define CGEN_VALIDATE_INSN_SUPPORTED
+#define CGEN_VERBOSE_ASSEMBLER_ERRORS
+
+#include "../include/cgen/bitset.h"
+
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+
+#ifndef CHAR_BIT
+#define CHAR_BIT 8
+#endif
+
+/* -- */
+
+/* -- ibd.h */
+/* -- */

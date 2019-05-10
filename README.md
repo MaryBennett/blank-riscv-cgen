@@ -1,6 +1,27 @@
 # blank-riscv-cgen
-This is the "blank" RISC-V CGEN repo which is ued as part of my third year project.
+This is repository contains the files I changed in Binutils to generate a RISC-V CGEN port as part of my third-year project.
 
-By "blank" I mean that the file riscv.cpu will be missing and the other files will have minimal information.
+To generate the port, run:
 
-cgen\ is from https://github.com/embecosm/cgen.git
+git clone git clone https://github.com/embecosm/riscv-toolchain.git
+
+./clone-all.sh
+
+./build-targets.sh
+
+git clone https://github.com/embecosm/cgen.git
+
+cp -nR ../cgen/*
+
+Then add the files:
+ * ~/binutils/gas/config/tc-riscv.c
+ * ~/binutils/gas/config/tc-riscv.h
+ * ~/binutils/cpu/riscv.cpu
+ * ~/binutils/cpu/riscv.opc
+ * ~/binutils/opcodes/configure.ac
+ * ~/binutils/opcodes/Makefile.am
+ * ~/binutils/gas/configure.ac
+
+Remember to regenerate the Configure file for opcodes/ and gas/ using the command:
+
+autoreconf -vfi
